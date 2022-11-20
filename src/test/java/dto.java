@@ -1,17 +1,16 @@
-import org.ah.basic.RedisQuery;
-import org.ah.basic.RedisQueryFilter;
+import org.ah.jedisQueryBuilder.QueryObject;
+import org.ah.jedisQueryBuilder.ObjectBinder;
 
-public class dto extends RedisQuery {
-	@RedisQueryFilter(alias = "age")
-	private int age;
-	@RedisQueryFilter(alias = "name")
+public class dto extends QueryObject {
+	@ObjectBinder(alias = "age")
+	private Integer age;
+	@ObjectBinder(alias = "name")
 	private String name;
-	@RedisQueryFilter
-	private boolean married;
+	@ObjectBinder
+	private Boolean married;
 
 	public int getAge() {
 		return age;
-		getQueryParameterList().replace("age",)
 	}
 
 	public void setAge(int age) {
