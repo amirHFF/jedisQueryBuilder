@@ -1,6 +1,7 @@
 import org.ah.jedisQueryBuilder.AutomateQueryBuilder;
-import org.ah.jedisQueryBuilder.QueryBuilder;
+import org.ah.jedisQueryBuilder.CustomQueryBuilder;
 import org.ah.jedisQueryBuilder.QueryOperator;
+import org.ah.jedisQueryBuilder.Queryable;
 import org.junit.Test;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.UnifiedJedis;
@@ -17,10 +18,10 @@ public class QueryTester {
 	public void testObjectQuery() {
 		connect();
 		dto dto = new dto();
-		dto.setName("amir | reza");
-//		dto.setAge(12);
-		QueryBuilder automateQueryBuilder = new AutomateQueryBuilder(jedis, "test2-idx", dto);
-		SearchResult result = automateQueryBuilder.search();
+		dto.setName("amir");
+		dto.setAge(12);
+		Queryable automateQueryable = new AutomateQueryBuilder(jedis, "test2-idx", dto);
+		SearchResult result = automateQueryable.search();
 		for (Document document : result.getDocuments()) {
 			System.out.println(document.getProperties());
 		}
@@ -42,9 +43,20 @@ public class QueryTester {
 		dto.setMarried(false);
 
 //		dto.setOperator(QueryOperator.OR);
-		QueryBuilder automateQueryBuilder = new AutomateQueryBuilder(jedis, "test2-idx", Arrays.asList(dto, dto2));
-		automateQueryBuilder.build();
-		SearchResult result = automateQueryBuilder.search();
+		Queryable automateQueryable = new AutomateQueryBuilder(jedis, "test2-idx", Arrays.asList(dto, dto2));
+		automateQueryable.build();
+		SearchResult result = automateQueryable.search();
+		for (Document document : result.getDocuments()) {
+			System.out.println(document.getProperties());
+		}
+	}
+	@Test
+	public void testCustomQuery(){
+		connect();
+		Queryable query=new CustomQueryBuilder(jedis,"test2-idx");
+		query.addOperation(QueryOperator.OPEN_PARENTHESES).addFilter("age",23).addOperation(QueryOperator.AND).addFilter("name","reza")
+				.addOperation(QueryOperator.CLOSE_PARENTHESES).addOperation(QueryOperator.OR).addOperation(QueryOperator.OPEN_PARENTHESES).addFilter("age",12).addOperation(QueryOperator.CLOSE_PARENTHESES).build();
+		SearchResult result= query.search();
 		for (Document document : result.getDocuments()) {
 			System.out.println(document.getProperties());
 		}

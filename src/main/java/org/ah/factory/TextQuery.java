@@ -2,7 +2,7 @@ package org.ah.factory;
 
 public class TextQuery extends QueryUnit<String,String> {
 
-	public TextQuery(String parameter, Object value) {
+	public TextQuery(String parameter, String value) {
 		super(parameter, value);
 	}
 

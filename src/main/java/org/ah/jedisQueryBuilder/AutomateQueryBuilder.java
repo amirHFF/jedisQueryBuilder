@@ -1,42 +1,25 @@
 package org.ah.jedisQueryBuilder;
 
-import org.ah.factory.RedisSearchQuery;
+import org.ah.factory.QueryFactory;
 import org.ah.reflection.QueryReflection;
 import redis.clients.jedis.UnifiedJedis;
-import redis.clients.jedis.search.Query;
-import redis.clients.jedis.search.SearchResult;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-public class AutomateQueryBuilder implements QueryBuilder {
+public class AutomateQueryBuilder extends QueryBuilder {
 
-	Map<String, Object> searchQueryMap = new HashMap<>();
-	private UnifiedJedis jedis;
-	private String index;
-	private List<String> queryList = new ArrayList<>();
-	private Query finalQuery;
 	private QueryObject currentObject;
 
 	public AutomateQueryBuilder(UnifiedJedis jedis, String index, QueryObject queryObject) {
-		this.jedis = jedis;
-		this.index = index;
+		super(index, jedis);
 		currentObject = queryObject;
 		bindAndCheck(queryObject);
 		createTextQuery();
 		build();
 	}
-	public AutomateQueryBuilder(UnifiedJedis jedis, String index, List<QueryObject> objectList) {
-		this.jedis = jedis;
-		this.index = index;
-		if (objectList != null && !objectList.isEmpty()) {
-			for (QueryObject queryObject : objectList) {
-				bindAndCheck(queryObject);
-				currentObject = queryObject;
-				createTextQuery();
-			}
 
-		}
-	}
 	private void bindAndCheck(QueryObject obj) {
 		QueryReflection queryHandler = new QueryReflection(obj.getClass());
 		try {
@@ -45,6 +28,17 @@ public class AutomateQueryBuilder implements QueryBuilder {
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void createTextQuery() {
+		queryList.add("( ");
+		for (Map.Entry<String, Object> query : searchQueryMap.entrySet()) {
+			queryList.add(QueryFactory.createTextQuery(query.getKey(), query.getValue()));
+		}
+		queryList.add(")");
+//		queryList.addAll(QueryFactory.createTextQuery(searchQueryMap));
+		queryList.add(" " + currentObject.getOperator().getValue() + " ");
+
 	}
 
 	private void checkAttribute(Map<String, Object> queryParam) {
@@ -59,93 +53,37 @@ public class AutomateQueryBuilder implements QueryBuilder {
 						iterator.remove();
 					}
 				}
-
 			}
 		}
 	}
 
-	@Override
-	public List<String> getIndexAttributes() {
-		List<String> indexAttribute = new ArrayList<String>();
+	public AutomateQueryBuilder(UnifiedJedis jedis, String index, List<QueryObject> objectList) {
+		super(index, jedis);
 
-		Map<String, Object> AllAttribute = jedis.ftInfo(index);
-		ArrayList<Object> attributeList = ((ArrayList<Object>) AllAttribute.get("attributes"));
-
-		for (Object info : attributeList) {
-			ArrayList<String> infoList = ((ArrayList<String>) info);
-			for (int i = 0; i < infoList.size(); i++) {
-				if (infoList.get(i).equals("attribute")) {
-					try {
-						indexAttribute.add(infoList.get(i + 1));
-					} catch (IndexOutOfBoundsException ex) {
-						ex.printStackTrace();
-					}
-				}
+		if (objectList != null && !objectList.isEmpty()) {
+			for (QueryObject queryObject : objectList) {
+				bindAndCheck(queryObject);
+				currentObject = queryObject;
+				createTextQuery();
 			}
-		}
-		return indexAttribute;
 
+		}
+	}
+
+	@Override
+	public AutomateQueryBuilder addFilter(String attribute, Object value) {
+		queryList.add(QueryFactory.createTextQuery(attribute,value));
+		return this;
+	}
+
+	@Override
+	public AutomateQueryBuilder addOperation(QueryOperator operator) {
+		queryList.add(" " + operator.getValue() + " ");
+		return this;
 	}
 
 	@Override
 	public void build() {
-		RedisSearchQuery redisSearchQuery = new RedisSearchQuery();
-		finalQuery=redisSearchQuery.createFinalQuery(queryList);
-
-	}
-
-	public void createTextQuery() {
-		RedisSearchQuery redisSearchQuery = new RedisSearchQuery();
-		queryList.addAll(redisSearchQuery.createTextQuery(searchQueryMap));
-		queryList.add(" "+currentObject.getOperator().getValue()+" ");
-
-	}
-
-	@Override
-	public SearchResult search() {
-		return jedis.ftSearch(index, finalQuery);
-	}
-
-	@Override
-	public Map<String, Object> info() {
-		return jedis.ftInfo(index);
-	}
-
-	private Query convertToQuery(List<String> queries) {
-		StringBuilder queryString = new StringBuilder();
-		for (String query : queries) {
-			queryString.append(query);
-			queryString.append(" ");
-		}
-		return new Query(queryString.toString());
-	}
-
-	public void setTextQuery(String parameter, String value) {
-		StringBuilder query = new StringBuilder("@");
-		query.append(parameter);
-		query.append(":(");
-		query.append(value);
-		query.append(")");
-//		queries.add(query.toString());
-	}
-
-	public void setNumericQuery(String parameter, Number value) {
-		StringBuilder query = new StringBuilder("@");
-		query.append(parameter);
-		query.append(":[");
-		query.append(value);
-		query.append(" ");
-		query.append(value);
-		query.append("]");
-//		queries.add(query.toString());
-	}
-
-	public void setBooleanQuery(String parameter, boolean value) {
-		StringBuilder query = new StringBuilder("@");
-		query.append(parameter);
-		query.append(":{");
-		query.append(value);
-		query.append("}");
-//		queries.add(query.toString());
+		finalQuery = QueryFactory.createFinalQuery(queryList);
 	}
 }

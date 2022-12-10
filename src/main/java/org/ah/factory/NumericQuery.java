@@ -1,7 +1,7 @@
 package org.ah.factory;
 
 public class NumericQuery extends QueryUnit<String,Number> {
-	public NumericQuery(String parameter, Object value) {
+	public NumericQuery(String parameter, Number value) {
 		super(parameter, value);
 	}
 

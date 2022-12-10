@@ -1,7 +1,7 @@
 package org.ah.factory;
 
 public class TagQuery extends QueryUnit<String, Boolean> {
-	public TagQuery(String parameter, Object value) {
+	public TagQuery(String parameter, Boolean value) {
 		super(parameter, value);
 	}
 

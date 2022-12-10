@@ -2,7 +2,9 @@ package org.ah.jedisQueryBuilder;
 
 public enum QueryOperator {
 	AND("AND"," "),
-	OR("UNION"," | ");
+	OR("UNION"," | "),
+	OPEN_PARENTHESES("open"," ( "),
+	CLOSE_PARENTHESES("close"," ) ");
 //	EQUAL(),
 //	BIGGER,
 //	LOWER;

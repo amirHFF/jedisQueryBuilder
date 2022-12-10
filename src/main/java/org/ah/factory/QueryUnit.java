@@ -1,13 +1,13 @@
 package org.ah.factory;
 
 public abstract class QueryUnit<Q,T> {
-	protected String parameter;
-	protected Object value;
+	protected Q parameter;
+	protected T value;
 
-	public QueryUnit(String parameter, Object value) {
+	public QueryUnit(Q parameter, T value) {
 		this.parameter = parameter;
 		this.value = value;
 	}
 
-	abstract Q getQueryHandlerObject();
+	abstract String getQueryHandlerObject();
 }
